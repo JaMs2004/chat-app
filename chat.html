@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Charla</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Barra lateral -->
+    <aside class="sidebar">
+      <div class="sidebar__top">
+        <span class="sidebar__mark">◆ Charla</span>
+        <button id="logout-btn" class="icon-btn" title="Cerrar sesión">⏻</button>
+      </div>
+
+      <button id="new-chat-btn" class="btn btn--accent btn--block">+ Nueva conversación</button>
+
+      <ul id="conversation-list" class="conversation-list"></ul>
+
+      <div class="sidebar__me">
+        <span class="sidebar__me-dot"></span>
+        <span id="my-username"></span>
+      </div>
+    </aside>
+
+    <!-- Panel de chat -->
+    <main class="chat-area">
+      <div id="empty-state" class="empty-state">
+        <p>Selecciona una conversación o crea una nueva para comenzar.</p>
+      </div>
+
+      <div id="chat-panel" class="chat-panel hidden">
+        <header class="chat-panel__header">
+          <span id="chat-header-name"></span>
+        </header>
+
+        <ul id="message-list" class="message-list"></ul>
+
+        <form id="message-form" class="message-form">
+          <input id="message-input" type="text" placeholder="Escribe un mensaje..." autocomplete="off" required />
+          <button type="submit" class="btn btn--accent">Enviar</button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal: nueva conversación -->
+  <div id="new-chat-modal" class="modal hidden">
+    <div class="modal__card">
+      <div class="modal__header">
+        <h2>Nueva conversación</h2>
+        <button id="close-modal-btn" type="button" class="icon-btn">✕</button>
+      </div>
+
+      <form id="new-chat-form">
+        <label>
+          Buscar usuario por nombre
+          <input type="text" id="user-search" placeholder="ej: josefina" autocomplete="off" />
+        </label>
+        <ul id="user-search-results" class="user-results"></ul>
+
+        <div id="selected-users" class="chip-list"></div>
+
+        <label id="group-name-field" class="hidden">
+          Nombre del grupo (opcional)
+          <input type="text" id="group-name-input" placeholder="ej: Equipo SPM" />
+        </label>
+
+        <button type="submit" class="btn btn--primary btn--block">Crear conversación</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/chat.js"></script>
+</body>
+</html>

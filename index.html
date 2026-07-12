@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Charla — Ingresa</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="auth-body">
+  <div class="auth-shell">
+    <div class="auth-brand">
+      <span class="auth-brand__mark">◆</span>
+      <h1>Charla</h1>
+      <p>Conversaciones directas y grupales, en tiempo real.</p>
+    </div>
+
+    <div class="auth-card">
+      <p id="auth-error" class="auth-error hidden"></p>
+
+      <form id="nickname-form" class="auth-form">
+        <h2>Elige tu apodo</h2>
+        <label>
+          Nombre para mostrar
+          <input type="text" id="nickname-input" required minlength="2" maxlength="24" autocomplete="off" placeholder="ej: pato_23" />
+        </label>
+        <button type="submit" class="btn btn--primary">Entrar a la sala</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/auth.js"></script>
+</body>
+</html>
