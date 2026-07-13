@@ -32,20 +32,26 @@ nicknameForm.addEventListener("submit", async (e) => {
   submitBtn.disabled = true;
   submitBtn.textContent = "Entrando...";
 
-  const { error } = await supabase.auth.signInAnonymously({
-    options: { data: { username: nickname } },
-  });
+  const { data, error } = await supabase.auth
+    .signInAnonymously({
+      options: { data: { username: nickname } },
+    })
+    .catch((err) => ({ data: null, error: err }));
 
   if (error) {
+    console.error("Error de login:", error);
     submitBtn.disabled = false;
     submitBtn.textContent = "Entrar a la sala";
-    return showMessage(traducirError(error.message));
+    return showMessage(traducirError(error));
   }
 
   window.location.href = "chat.html";
 });
 
-function traducirError(msg) {
+function traducirError(error) {
+  const msg =
+    (error && (error.message || error.error_description || error.msg)) ||
+    "Ocurrió un error inesperado. Revisa la consola (F12) para más detalles.";
   if (msg.includes("Anonymous sign-ins are disabled")) {
     return "Falta activar 'Anonymous Sign-Ins' en Supabase (Authentication → Providers).";
   }
