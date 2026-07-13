@@ -22,6 +22,7 @@ const userSearchInput = document.getElementById("user-search");
 const userSearchResults = document.getElementById("user-search-results");
 const selectedUsersEl = document.getElementById("selected-users");
 const groupNameField = document.getElementById("group-name-field");
+const newChatError = document.getElementById("new-chat-error");
 
 let selectedUserIds = new Map(); // id -> username
 
@@ -44,9 +45,23 @@ async function init() {
 
   await loadConversations();
 
-  supabase.auth.onAuthStateChange((event) => {
-    if (event === "SIGNED_OUT") window.location.href = "index.html";
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_OUT") {
+      window.location.href = "index.html";
+      return;
+    }
+    // Mantiene currentUser sincronizado con la sesión real, por si
+    // otra pestaña del mismo navegador cambia de usuario.
+    if (session?.user) currentUser = session.user;
   });
+}
+
+// Devuelve el id de usuario tomando la sesión más fresca posible,
+// para nunca mandar un created_by/sender_id desincronizado.
+async function getFreshUserId() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user) currentUser = session.user;
+  return currentUser?.id;
 }
 
 // ---------- Cerrar sesión ----------
@@ -170,9 +185,10 @@ messageForm.addEventListener("submit", async (e) => {
   if (!content || !activeConversationId) return;
 
   messageInput.value = "";
+  const myId = await getFreshUserId();
   const { error } = await supabase.from("messages").insert({
     conversation_id: activeConversationId,
-    sender_id: currentUser.id,
+    sender_id: myId,
     content,
   });
   if (error) console.error("Error al enviar mensaje:", error.message);
@@ -191,6 +207,17 @@ function closeModal() {
   renderSelectedUsers();
   userSearchInput.value = "";
   userSearchResults.innerHTML = "";
+  hideNewChatError();
+}
+
+function showNewChatError(message) {
+  newChatError.textContent = message;
+  newChatError.classList.remove("hidden");
+}
+
+function hideNewChatError() {
+  newChatError.classList.add("hidden");
+  newChatError.textContent = "";
 }
 
 let searchTimeout;
@@ -213,8 +240,17 @@ async function searchUsers() {
     .limit(8);
 
   userSearchResults.innerHTML = "";
-  for (const user of users ?? []) {
-    if (selectedUserIds.has(user.id)) continue;
+  const results = (users ?? []).filter((u) => !selectedUserIds.has(u.id));
+
+  if (results.length === 0) {
+    const li = document.createElement("li");
+    li.className = "conversation-list__empty";
+    li.textContent = "Nadie con ese apodo ha entrado todavía.";
+    userSearchResults.appendChild(li);
+    return;
+  }
+
+  for (const user of results) {
     const li = document.createElement("li");
     li.className = "user-result";
     li.textContent = user.username;
@@ -223,6 +259,7 @@ async function searchUsers() {
       renderSelectedUsers();
       userSearchInput.value = "";
       userSearchResults.innerHTML = "";
+      hideNewChatError();
     });
     userSearchResults.appendChild(li);
   }
@@ -249,26 +286,31 @@ function renderSelectedUsers() {
 
 newChatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (selectedUserIds.size === 0) return;
+  hideNewChatError();
+
+  if (selectedUserIds.size === 0) {
+    return showNewChatError("Busca y selecciona al menos un usuario de la lista antes de crear la conversación.");
+  }
 
   const isGroup = selectedUserIds.size >= 2;
   const groupName = document.getElementById("group-name-input").value.trim();
+  const myId = await getFreshUserId();
 
   const { data: conversation, error: convError } = await supabase
     .from("conversations")
-    .insert({ is_group: isGroup, name: isGroup ? groupName || null : null, created_by: currentUser.id })
+    .insert({ is_group: isGroup, name: isGroup ? groupName || null : null, created_by: myId })
     .select()
     .single();
 
-  if (convError) return console.error(convError.message);
+  if (convError) return showNewChatError("No se pudo crear la conversación: " + convError.message);
 
-  const participants = [currentUser.id, ...selectedUserIds.keys()].map((user_id) => ({
+  const participants = [myId, ...selectedUserIds.keys()].map((user_id) => ({
     conversation_id: conversation.id,
     user_id,
   }));
 
   const { error: partError } = await supabase.from("conversation_participants").insert(participants);
-  if (partError) return console.error(partError.message);
+  if (partError) return showNewChatError("No se pudo agregar a los participantes: " + partError.message);
 
   closeModal();
   await loadConversations();
